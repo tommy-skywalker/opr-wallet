@@ -66,10 +66,10 @@ export const EARN: EarnPosition = {
   id: 'earn-dec-12',
   asset: 'USDC',
   principal: 25000,
-  apy: 8.4,
-  startDate: '2026-09-13',
+  monthlyRate: 4.5,
+  startDate: '2026-07-17',
   maturityDate: '2026-12-12',
-  termDays: 90,
+  termDays: 148,
 };
 
 export const TRANSACTIONS: Tx[] = [
@@ -110,11 +110,11 @@ export const TRANSACTIONS: Tx[] = [
     id: 'tx-3',
     kind: 'earn-lock',
     title: 'Locked in Earn',
-    subtitle: '90 day fixed term',
+    subtitle: 'Fixed term, 4.5% monthly',
     symbol: 'USDC',
     amount: 25000,
     usd: 25000,
-    date: '2026-09-13T11:30:00',
+    date: '2026-07-17T11:30:00',
     status: 'confirmed',
   },
   {
@@ -125,7 +125,7 @@ export const TRANSACTIONS: Tx[] = [
     symbol: 'USDC',
     amount: 25000,
     usd: 25000,
-    date: '2026-09-13T11:02:00',
+    date: '2026-07-17T11:02:00',
     status: 'confirmed',
   },
 ];

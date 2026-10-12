@@ -17,7 +17,7 @@ export interface EarnPosition {
   id: string;
   asset: string;
   principal: number;
-  apy: number; // annual percent
+  monthlyRate: number; // percent per month
   startDate: string; // ISO
   maturityDate: string; // ISO
   termDays: number;

@@ -50,6 +50,7 @@ export const txTime = (iso: string): string => {
 export const truncate = (addr: string, lead = 6, tail = 4): string =>
   `${addr.slice(0, lead)}...${addr.slice(-tail)}`;
 
-// Interest accrued on a fixed term position up to a given day count.
-export const accrued = (principal: number, apy: number, days: number): number =>
-  principal * (apy / 100) * (days / 365);
+// Interest accrued on a fixed term position, at a simple monthly rate
+// pro-rated over 30 day months.
+export const accrued = (principal: number, monthlyRate: number, days: number): number =>
+  principal * (monthlyRate / 100) * (days / 30);

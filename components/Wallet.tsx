@@ -151,7 +151,7 @@ const Wallet: React.FC<Props> = ({ assets, earn, spotTotal, onSend, onReceive, o
               <div>
                 <p className="text-[14px] font-medium text-white">Fixed term earning</p>
                 <p className="text-[12px] text-white/45 mt-0.5">
-                  {earn.apy}% APY · matures 12 Dec
+                  {earn.monthlyRate}% monthly · matures 12 Dec
                 </p>
               </div>
             </div>

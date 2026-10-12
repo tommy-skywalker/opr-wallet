@@ -20,8 +20,8 @@ const Earn: React.FC<{ earn: EarnPosition; onWithdraw: () => void }> = ({ earn, 
   const remaining = Math.max(0, daysBetween(today, end));
   const progress = Math.min(1, elapsed / earn.termDays);
 
-  const earnedSoFar = accrued(earn.principal, earn.apy, elapsed);
-  const totalInterest = accrued(earn.principal, earn.apy, earn.termDays);
+  const earnedSoFar = accrued(earn.principal, earn.monthlyRate, elapsed);
+  const totalInterest = accrued(earn.principal, earn.monthlyRate, earn.termDays);
   const payout = earn.principal + totalInterest;
 
   return (
@@ -72,7 +72,11 @@ const Earn: React.FC<{ earn: EarnPosition; onWithdraw: () => void }> = ({ earn, 
         <div className="bg-white/[0.04] border border-white/[0.07] rounded-2xl p-5">
           <p className="text-[13px] font-medium text-white mb-4">Term</p>
           <Step done label="Deposit locked" sub={longDate(earn.startDate)} />
-          <Step active label="Accruing interest" sub={`${earn.apy}% APY, ${elapsed} of ${earn.termDays} days`} />
+          <Step
+            active
+            label="Accruing interest"
+            sub={`${earn.monthlyRate}% monthly, ${elapsed} of ${earn.termDays} days`}
+          />
           <Step label="Unlocks" sub={longDate(earn.maturityDate)} last />
         </div>
       </section>
