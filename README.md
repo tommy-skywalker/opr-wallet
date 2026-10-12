@@ -72,6 +72,8 @@ throttled, bottom sheets with spring easing, and a 15 minute inactivity auto-loc
 - **$345.00** spot across USDT, ETH and BTC
 - **25,000 USDC** locked in a fixed term position at **4.5% monthly**, opened
   17 July 2026 and maturing 12 December 2026, paying out **$30,550.00**
+- The position was funded by three naira conversions (₦5m, ₦7m and ₦10m at
+  ₦1,390 to the dollar) plus a top up, which together come to exactly $25,000
 
 Passcode: `110801`, or tap the Face ID key to unlock.
 

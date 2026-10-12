@@ -23,7 +23,7 @@ export interface EarnPosition {
   termDays: number;
 }
 
-export type TxKind = 'receive' | 'send' | 'earn-lock' | 'earn-reward';
+export type TxKind = 'receive' | 'send' | 'convert' | 'earn-lock' | 'earn-reward';
 
 export interface Tx {
   id: string;

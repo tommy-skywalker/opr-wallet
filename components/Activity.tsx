@@ -5,7 +5,7 @@ import { ScreenHeader} from './Ui';
 
 const FILTERS = [
   ['all', 'All'],
-  ['receive', 'Received'],
+  ['in', 'Money in'],
   ['earn', 'Earn'],
 ] as const;
 
@@ -16,6 +16,9 @@ const ICONS: Record<string, React.ReactNode> = {
   send: <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6" />,
   'earn-lock': <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />,
   'earn-reward': <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />,
+  convert: (
+    <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 16.5V5.5m0 0L4.5 8.5M7.5 5.5l3 3M16.5 7.5v11m0 0l3-3M16.5 18.5l-3-3" />
+  ),
 };
 
 const Activity: React.FC<{ transactions: Tx[] }> = ({ transactions }) => {
@@ -24,7 +27,11 @@ const Activity: React.FC<{ transactions: Tx[] }> = ({ transactions }) => {
   const filtered = useMemo(
     () =>
       transactions.filter((t) =>
-        filter === 'all' ? true : filter === 'earn' ? t.kind.startsWith('earn') : t.kind === filter,
+        filter === 'all'
+          ? true
+          : filter === 'earn'
+          ? t.kind.startsWith('earn')
+          : t.kind === 'receive' || t.kind === 'convert',
       ),
     [transactions, filter],
   );
@@ -67,7 +74,9 @@ const Activity: React.FC<{ transactions: Tx[] }> = ({ transactions }) => {
             <h2 className="px-5 text-[12px] font-medium text-white/35 mb-1">{month}</h2>
             <div className="px-2">
               {txs.map((t) => {
-                const incoming = t.kind === 'receive' || t.kind === 'earn-reward';
+                const incoming =
+                  t.kind === 'receive' || t.kind === 'earn-reward' || t.kind === 'convert';
+                const converted = t.kind === 'convert';
                 const locked = t.kind === 'earn-lock';
                 return (
                   <div
@@ -78,6 +87,8 @@ const Activity: React.FC<{ transactions: Tx[] }> = ({ transactions }) => {
                       className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${
                         locked
                           ? 'bg-[#7C5CFF]/10 border-[#7C5CFF]/25 text-[#A992FF]'
+                          : converted
+                          ? 'bg-[#3B9DFF]/10 border-[#3B9DFF]/25 text-[#5FB2FF]'
                           : incoming
                           ? 'bg-[#16C784]/10 border-[#16C784]/25 text-[#16C784]'
                           : 'bg-white/[0.06] border-white/10 text-white/70'
