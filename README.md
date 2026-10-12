@@ -10,9 +10,9 @@ Every graph, ring and icon in the app is hand-built SVG.
 > Demo project. No keys are generated, no funds are held, and outgoing transfers are
 > intentionally disabled.
 
-| Lock | Wallet | Assets | Earn | Activity | Receive |
-|---|---|---|---|---|---|
-| ![Lock](screenshots/lock.jpg) | ![Wallet](screenshots/wallet.jpg) | ![Assets](screenshots/assets.jpg) | ![Earn](screenshots/earn.jpg) | ![Activity](screenshots/activity.jpg) | ![Receive](screenshots/receive.jpg) |
+| Lock | Wallet | Scrub | Assets | Earn | Activity | Receive |
+|---|---|---|---|---|---|---|
+| ![Lock](screenshots/lock.jpg) | ![Wallet](screenshots/wallet.jpg) | ![Scrubbing the chart](screenshots/scrub.jpg) | ![Assets](screenshots/assets.jpg) | ![Earn](screenshots/earn.jpg) | ![Activity](screenshots/activity.jpg) | ![Receive](screenshots/receive.jpg) |
 
 ## Design direction
 
@@ -35,12 +35,24 @@ not jitter as values animate.
 
 ## Things worth looking at
 
-**Charting, from scratch.** The portfolio graph fits a Catmull-Rom spline through the
-series and converts it to cubic béziers, which gives a curve that reads like a market
-line instead of a polyline. It measures its own container and matches the SVG viewBox
-to real pixel width, so the end marker stays a circle rather than being stretched by a
-non-uniform scale. The same primitive drives the per-token sparklines and the Earn
-progress ring. See [`components/Charts.tsx`](components/Charts.tsx).
+**Charting, from scratch.** The portfolio graph fits a monotone cubic spline
+(Fritsch-Carlson) through the series. Unlike a Catmull-Rom spline it never overshoots
+between points, so sharp moves stay sharp instead of producing phantom dips and spikes
+around them. The chart measures its own container and matches the SVG viewBox to real
+pixel width, so markers stay circular rather than being stretched by a non-uniform
+scale. The same primitive drives the per-token sparklines and the Earn progress ring.
+See [`components/Charts.tsx`](components/Charts.tsx).
+
+**The chart is scrubbable.** Press and drag across it and a crosshair tracks your
+finger while the header reports the value, change and date at that point, then snaps
+back on release. A dashed rule marks where the selected period opened, so a gain or
+loss reads without needing axis labels.
+
+**Plausible data.** The series is generated from a mean-reverting random walk with
+momentum, which produces runs, pullbacks and consolidations rather than a straight
+ramp. Movement is deliberately modest, because 25,000 of the 25,345 sits in a fixed
+rate position and does not swing. The vertical axis fits each window, so a third of a
+percent still fills the chart.
 
 **The QR code is real.** Receive encodes the actual address through a proper QR
 encoder, so it scans. It renders as crisp SVG rects rather than a raster image, which

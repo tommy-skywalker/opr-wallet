@@ -15,22 +15,38 @@ interface Props {
   onAsset: (a: Asset) => void;
 }
 
-const RANGES = ['1W', '1M', '3M', 'ALL'] as const;
+const RANGES = ['1D', '1W', '1M', 'ALL'] as const;
 
 const Wallet: React.FC<Props> = ({ assets, earn, spotTotal, onSend, onReceive, onEarn, onAsset }) => {
   const [range, setRange] = useState<(typeof RANGES)[number]>('1M');
   const [hidden, setHidden] = useState(false);
+  const [scrub, setScrub] = useState<number | null>(null);
 
   const total = spotTotal + earn.principal;
   const animated = useCountUp(total);
   const series = PORTFOLIO_SERIES[range];
-  const first = series[0];
-  const changeUsd = total - first;
+  const first = series[0].v;
+
+  // While scrubbing, the header reports the point under the finger.
+  const point = scrub === null ? null : series[scrub];
+  const shown = point ? point.v : animated;
+  const compare = point ? point.v : total;
+  const changeUsd = compare - first;
   const changePct = (changeUsd / first) * 100;
   const up = changeUsd >= 0;
 
+  const scrubLabel = point
+    ? new Date(point.t).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        ...(range === '1D' || range === '1W'
+          ? { hour: 'numeric', minute: '2-digit', hour12: true }
+          : {}),
+      })
+    : range;
+
   const daysLeft = Math.max(0, daysBetween(startOfToday(), parseISO(earn.maturityDate)));
-  const { whole, cents } = usdParts(hidden ? 0 : animated);
+  const { whole, cents } = usdParts(hidden ? 0 : shown);
 
   return (
     <div className="pb-6">
@@ -80,19 +96,22 @@ const Wallet: React.FC<Props> = ({ assets, earn, spotTotal, onSend, onReceive, o
             {pct(changePct)}
           </span>
           <span className="text-[13px] text-white/40 tabular-nums">
-            {up ? '+' : '-'}${usd(Math.abs(changeUsd))} · {range}
+            {up ? '+' : '-'}${usd(Math.abs(changeUsd))} · {scrubLabel}
           </span>
         </div>
       </section>
 
       {/* Chart */}
       <section className="mt-5">
-        <AreaChart values={series} positive={up} height={148} />
+        <AreaChart points={series} positive={up} height={168} onScrub={setScrub} />
         <div className="px-5 mt-3 flex gap-1.5">
           {RANGES.map((r) => (
             <button
               key={r}
-              onClick={() => setRange(r)}
+              onClick={() => {
+                setRange(r);
+                setScrub(null);
+              }}
               className={`flex-1 py-1.5 rounded-lg text-[12px] font-semibold transition-colors ${
                 range === r ? 'bg-white/[0.09] text-white' : 'text-white/35 active:bg-white/[0.04]'
               }`}

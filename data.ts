@@ -130,16 +130,57 @@ export const TRANSACTIONS: Tx[] = [
   },
 ];
 
-// Portfolio value history. Ends at 25,345 (345 spot + 25,000 locked).
-const TOTAL = 25345;
-export const PORTFOLIO_SERIES: Record<string, number[]> = {
-  '1W': walk(101, 28, TOTAL, 0.004),
-  '1M': walk(202, 40, TOTAL, 0.008),
-  '3M': walk(303, 60, TOTAL, 0.02),
-  ALL: [
-    ...walk(404, 20, 320, 0.05).map((v) => v),
-    ...walk(505, 40, TOTAL, 0.01),
-  ],
+// Portfolio value history as dated points, so the chart can be scrubbed.
+export interface SeriesPoint {
+  t: number; // epoch ms
+  v: number;
+}
+
+const DAY = 86400000;
+const NOW = Date.now();
+
+// A window of market-shaped movement. The noise is mean reverting with momentum,
+// which gives runs and pullbacks rather than a straight ramp, and it tapers at
+// both ends so the window lands on exact start and end values. Amplitude is in
+// dollars rather than a percentage, because this portfolio is dominated by a
+// fixed locked position and only the small spot holdings actually move.
+const window_ = (
+  seed: number,
+  points: number,
+  spanDays: number,
+  startValue: number,
+  endValue: number,
+  amplitude: number,
+): SeriesPoint[] => {
+  const rnd = seeded(seed);
+  const noise: number[] = [];
+  let momentum = 0;
+  let level = 0;
+  for (let i = 0; i < points; i++) {
+    momentum = momentum * 0.78 + (rnd() - 0.5) * 0.6;
+    level = level * 0.9 + momentum;
+    noise.push(level);
+  }
+  const peak = Math.max(...noise.map(Math.abs)) || 1;
+
+  return noise.map((n, i) => {
+    const p = points === 1 ? 1 : i / (points - 1);
+    const base = startValue + (endValue - startValue) * p;
+    const taper = Math.sin(Math.PI * p); // 0 at both ends
+    return {
+      t: NOW - spanDays * (1 - p) * DAY,
+      v: base + (n / peak) * amplitude * taper,
+    };
+  });
+};
+
+// The wallet was funded 87 days ago, so "all" starts there. Movement is modest
+// by design: 25,000 of the 25,345 is locked at a fixed rate and does not swing.
+export const PORTFOLIO_SERIES: Record<string, SeriesPoint[]> = {
+  '1D': window_(101, 26, 1, 25338, 25345, 9),
+  '1W': window_(202, 40, 7, 25321, 25345, 15),
+  '1M': window_(303, 46, 30, 25266, 25345, 32),
+  ALL: window_(404, 70, 87, 25180, 25345, 52),
 };
 
 export const WALLET_ADDRESS = '0x7A3f91C2b4E8d5A6F1c09B3e7D2a845C6E0f12Ab';
