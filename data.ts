@@ -9,6 +9,27 @@ const seeded = (seed: number) => {
   };
 };
 
+// A 24h sparkline that starts where the 24h change implies and ends at the
+// current price, so the line direction always agrees with the percentage.
+const spark = (seed: number, price: number, change24h: number, points = 24): number[] => {
+  const rnd = seeded(seed);
+  const start = price / (1 + change24h / 100);
+  const noise: number[] = [];
+  let momentum = 0;
+  let level = 0;
+  for (let i = 0; i < points; i++) {
+    momentum = momentum * 0.75 + (rnd() - 0.5) * 0.6;
+    level = level * 0.9 + momentum;
+    noise.push(level);
+  }
+  const peak = Math.max(...noise.map(Math.abs)) || 1;
+  return noise.map((n, i) => {
+    const p = i / (points - 1);
+    const base = start + (price - start) * p;
+    return base + (n / peak) * price * 0.004 * Math.sin(Math.PI * p);
+  });
+};
+
 const walk = (seed: number, points: number, end: number, volatility: number): number[] => {
   const rnd = seeded(seed);
   const out: number[] = [];
@@ -29,11 +50,11 @@ export const ASSETS: Asset[] = [
     symbol: 'USDT',
     name: 'Tether',
     network: 'Ethereum',
-    amount: 124.2,
-    price: 1.0,
-    change24h: 0.01,
+    amount: 123.694739,
+    price: 0.9998,
+    change24h: -0.02,
     color: '#26A17B',
-    spark: walk(11, 24, 1.0, 0.004),
+    spark: spark(11, 0.9998, -0.02),
     address: '0x7A3f91C2b4E8d5A6F1c09B3e7D2a845C6E0f12Ab',
   },
   {
@@ -41,11 +62,11 @@ export const ASSETS: Asset[] = [
     symbol: 'ETH',
     name: 'Ethereum',
     network: 'Ethereum',
-    amount: 0.045,
-    price: 2640,
-    change24h: -0.86,
+    amount: 0.04517382,
+    price: 2641.07,
+    change24h: -0.92,
     color: '#627EEA',
-    spark: walk(23, 24, 2640, 0.02),
+    spark: spark(23, 2641.07, -0.92),
     address: '0x7A3f91C2b4E8d5A6F1c09B3e7D2a845C6E0f12Ab',
   },
   {
@@ -53,11 +74,11 @@ export const ASSETS: Asset[] = [
     symbol: 'BTC',
     name: 'Bitcoin',
     network: 'Bitcoin',
-    amount: 0.0015,
-    price: 68000,
-    change24h: 2.14,
+    amount: 0.00150382,
+    price: 67842.15,
+    change24h: 1.87,
     color: '#F7931A',
-    spark: walk(37, 24, 68000, 0.018),
+    spark: spark(37, 67842.15, 1.87),
     address: 'bc1q9h6yzs4k2v8xq3mr7t0plw5djn2eac6uf0g3vz',
   },
 ];
@@ -79,8 +100,8 @@ export const TRANSACTIONS: Tx[] = [
     title: 'Received BTC',
     subtitle: 'From bc1q4t...9xkm',
     symbol: 'BTC',
-    amount: 0.0015,
-    usd: 102,
+    amount: 0.00150382,
+    usd: 102.02,
     date: '2026-10-09T14:22:00',
     status: 'confirmed',
   },
@@ -90,8 +111,8 @@ export const TRANSACTIONS: Tx[] = [
     title: 'Received ETH',
     subtitle: 'From 0x3Fa2...71Bd',
     symbol: 'ETH',
-    amount: 0.045,
-    usd: 118.8,
+    amount: 0.04517382,
+    usd: 119.31,
     date: '2026-10-02T09:41:00',
     status: 'confirmed',
   },
@@ -101,8 +122,8 @@ export const TRANSACTIONS: Tx[] = [
     title: 'Received USDT',
     subtitle: 'From 0x8C17...04Ee',
     symbol: 'USDT',
-    amount: 124.2,
-    usd: 124.2,
+    amount: 123.694739,
+    usd: 123.67,
     date: '2026-09-20T18:05:00',
     status: 'confirmed',
   },

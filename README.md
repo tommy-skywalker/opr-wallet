@@ -48,6 +48,12 @@ finger while the header reports the value, change and date at that point, then s
 back on release. A dashed rule marks where the selected period opened, so a gain or
 loss reads without needing axis labels.
 
+**Live prices.** Spot prices tick on an interval and pull back toward a reference,
+so the list moves the way a real feed does without the portfolio wandering off.
+Holdings are carried at full precision (0.00150382 BTC, 123.694739 USDT) and priced
+to the cent, because round holdings and round prices are the fastest way to make a
+wallet look synthetic.
+
 **Plausible data.** The series is generated from a mean-reverting random walk with
 momentum, which produces runs, pullbacks and consolidations rather than a straight
 ramp. Movement is deliberately modest, because 25,000 of the 25,345 sits in a fixed

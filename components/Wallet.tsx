@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Asset, EarnPosition } from '../types';
-import { PORTFOLIO_SERIES } from '../data';
-import { usdParts, usd, pct, crypto, daysBetween, parseISO, startOfToday } from '../utils';
+import { PORTFOLIO_SERIES, WALLET_ADDRESS } from '../data';
+import { usdParts, usd, pct, crypto, daysBetween, parseISO, startOfToday, truncate } from '../utils';
 import { AreaChart, Sparkline } from './Charts';
 import { CoinIcon, Logo, useCountUp } from './Ui';
 
@@ -21,6 +21,13 @@ const Wallet: React.FC<Props> = ({ assets, earn, spotTotal, onSend, onReceive, o
   const [range, setRange] = useState<(typeof RANGES)[number]>('1M');
   const [hidden, setHidden] = useState(false);
   const [scrub, setScrub] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const copyAddress = () => {
+    navigator.clipboard?.writeText(WALLET_ADDRESS).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   const total = spotTotal + earn.principal;
   const animated = useCountUp(total);
@@ -52,10 +59,16 @@ const Wallet: React.FC<Props> = ({ assets, earn, spotTotal, onSend, onReceive, o
     <div className="pb-6">
       {/* Top bar */}
       <header className="h-14 px-5 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <Logo size={26} />
-          <span className="text-[15px] font-semibold text-white tracking-tight">OPR</span>
-        </div>
+        <button
+          onClick={copyAddress}
+          className="flex items-center gap-2 bg-white/[0.05] border border-white/[0.08] rounded-full pl-1.5 pr-3 py-1.5 active:bg-white/[0.09] transition-colors"
+        >
+          <Logo size={20} />
+          <span className="text-[13px] font-medium text-white">Account 1</span>
+          <span className="text-[12px] text-white/35 font-mono">
+            {copied ? 'Copied' : truncate(WALLET_ADDRESS, 6, 4)}
+          </span>
+        </button>
         <button
           onClick={() => setHidden((h) => !h)}
           className="w-9 h-9 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center text-white/60 active:scale-95 transition-transform"
@@ -222,7 +235,13 @@ const Wallet: React.FC<Props> = ({ assets, earn, spotTotal, onSend, onReceive, o
       <section className="mt-7">
         <div className="px-5 flex items-center justify-between mb-1">
           <h2 className="text-[15px] font-semibold text-white">Assets</h2>
-          <span className="text-[12px] text-white/35 tabular-nums">{assets.length} tokens</span>
+          <span className="flex items-center gap-1.5 text-[11px] text-white/35">
+            <span className="relative flex w-1.5 h-1.5">
+              <span className="absolute inline-flex w-1.5 h-1.5 rounded-full bg-[#16C784] opacity-70 animate-ping" />
+              <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-[#16C784]" />
+            </span>
+            Live prices
+          </span>
         </div>
         <div className="px-2">
           {assets.map((a) => {
@@ -237,21 +256,22 @@ const Wallet: React.FC<Props> = ({ assets, earn, spotTotal, onSend, onReceive, o
                 <CoinIcon symbol={a.symbol} color={a.color} />
                 <div className="min-w-0 flex-1 text-left">
                   <p className="text-[14px] font-medium text-white truncate">{a.name}</p>
-                  <p className="text-[12px] text-white/40 tabular-nums mt-0.5">
-                    {crypto(a.amount, a.symbol)}
+                  <p className="text-[12px] tabular-nums mt-0.5 flex items-center gap-1.5">
+                    <span className="text-white/40">
+                      ${usd(a.price, a.price < 10 ? 4 : 2)}
+                    </span>
+                    <span className={positive ? 'text-[#16C784]' : 'text-[#EA3943]'}>
+                      {pct(a.change24h)}
+                    </span>
                   </p>
                 </div>
                 <Sparkline values={a.spark} positive={positive} />
-                <div className="text-right shrink-0 w-[86px]">
+                <div className="text-right shrink-0 w-[108px]">
                   <p className="text-[14px] font-medium text-white tabular-nums">
                     {hidden ? '••••' : `$${usd(value)}`}
                   </p>
-                  <p
-                    className={`text-[12px] font-medium tabular-nums mt-0.5 ${
-                      positive ? 'text-[#16C784]' : 'text-[#EA3943]'
-                    }`}
-                  >
-                    {pct(a.change24h)}
+                  <p className="text-[11px] text-white/40 tabular-nums mt-0.5 whitespace-nowrap">
+                    {hidden ? '••••' : crypto(a.amount, a.symbol)}
                   </p>
                 </div>
               </button>

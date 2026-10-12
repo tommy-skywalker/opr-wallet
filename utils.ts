@@ -13,7 +13,7 @@ export const usdParts = (v: number): { whole: string; cents: string } => {
 };
 
 export const crypto = (amount: number, symbol: string): string => {
-  const decimals = amount >= 1000 ? 2 : amount >= 1 ? 4 : 6;
+  const decimals = amount >= 1000 ? 2 : amount >= 1 ? 6 : 8;
   return `${amount.toLocaleString('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: decimals,

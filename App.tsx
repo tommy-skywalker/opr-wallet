@@ -21,10 +21,35 @@ const App: React.FC = () => {
   const [screen, setScreen] = useState<Screen>('wallet');
   const [modal, setModal] = useState<null | 'send' | 'receive'>(null);
 
+  const [assets, setAssets] = useState<Asset[]>(ASSETS);
+
   const spotTotal = useMemo(
-    () => ASSETS.reduce((sum, a) => sum + a.amount * a.price, 0),
-    [],
+    () => assets.reduce((sum, a) => sum + a.amount * a.price, 0),
+    [assets],
   );
+
+  // Prices drift and pull back toward their reference, so the list ticks the way
+  // a live feed does without wandering away from the reference portfolio.
+  useEffect(() => {
+    const base = new Map(ASSETS.map((a) => [a.id, { price: a.price, change: a.change24h }]));
+    const id = setInterval(() => {
+      setAssets((prev) =>
+        prev.map((a) => {
+          const ref = base.get(a.id);
+          if (!ref) return a;
+          const vol = a.symbol === 'USDT' ? 0.00004 : 0.00045;
+          const nudged = a.price * (1 + (Math.random() - 0.5) * 2 * vol);
+          const price = nudged + (ref.price - nudged) * 0.3;
+          return {
+            ...a,
+            price,
+            change24h: ref.change + ((price - ref.price) / ref.price) * 100,
+          };
+        }),
+      );
+    }, 5000);
+    return () => clearInterval(id);
+  }, []);
 
   // Refresh the unlock stamp on interaction, and re-lock after inactivity.
   useEffect(() => {
@@ -67,7 +92,7 @@ const App: React.FC = () => {
       default:
         return (
           <Wallet
-            assets={ASSETS}
+            assets={assets}
             earn={EARN}
             spotTotal={spotTotal}
             onSend={() => setModal('send')}
@@ -91,9 +116,9 @@ const App: React.FC = () => {
       </div>
 
       {modal === 'send' && (
-        <Send assets={ASSETS} spotTotal={spotTotal} onClose={() => setModal(null)} />
+        <Send assets={assets} spotTotal={spotTotal} onClose={() => setModal(null)} />
       )}
-      {modal === 'receive' && <Receive assets={ASSETS} onClose={() => setModal(null)} />}
+      {modal === 'receive' && <Receive assets={assets} onClose={() => setModal(null)} />}
     </div>
   );
 };

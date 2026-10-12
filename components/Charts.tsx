@@ -186,8 +186,8 @@ export const Sparkline: React.FC<{ values: number[]; positive: boolean }> = ({
   values,
   positive,
 }) => {
-  const w = 64;
-  const h = 26;
+  const w = 54;
+  const h = 24;
   const d = useMemo(() => smoothPath(toPoints(values, w, h, 3)), [values]);
   return (
     <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} className="shrink-0">
