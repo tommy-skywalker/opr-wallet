@@ -1,79 +1,55 @@
-// Shared formatting + date helpers used across the app.
+// Shared formatting helpers.
 
-export const formatNaira = (value: number, withDecimals = true): string =>
-  new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN',
-    minimumFractionDigits: withDecimals ? 2 : 0,
-    maximumFractionDigits: withDecimals ? 2 : 0,
-  }).format(value);
+export const usd = (v: number, decimals = 2): string =>
+  v.toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
 
-// Amount without the currency symbol (e.g. "4,220,660.60") — pair with your own ₦/NGN label.
-export const formatAmount = (value: number, withDecimals = true): string =>
-  formatNaira(value, withDecimals).replace(/NGN|₦/g, '').trim();
+// Splits a USD value so the cents can be rendered de-emphasised.
+export const usdParts = (v: number): { whole: string; cents: string } => {
+  const [whole, cents] = usd(v).split('.');
+  return { whole, cents };
+};
 
-// Parse a "yyyy-mm-dd" string as a LOCAL date (avoids the UTC-midnight off-by-one).
+export const crypto = (amount: number, symbol: string): string => {
+  const decimals = amount >= 1000 ? 2 : amount >= 1 ? 4 : 6;
+  return `${amount.toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: decimals,
+  })} ${symbol}`;
+};
+
+export const pct = (v: number): string => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
+
 export const parseISO = (iso: string): Date => {
-  const [y, m, d] = iso.split('-').map(Number);
+  const [datePart] = iso.split('T');
+  const [y, m, d] = datePart.split('-').map(Number);
   return new Date(y, m - 1, d);
 };
 
 export const startOfToday = (): Date => {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate());
 };
 
-// "6 July 2026"
-export const formatDateLong = (iso: string): string =>
+export const daysBetween = (a: Date, b: Date): number =>
+  Math.round((b.getTime() - a.getTime()) / 86400000);
+
+export const longDate = (iso: string): string =>
   parseISO(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
-// "06 Jul 2026"
-export const formatDateShort = (iso: string): string =>
-  parseISO(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+export const shortDate = (iso: string): string =>
+  parseISO(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 
-// Whole days from today until the given date (negative if in the past).
-export const daysUntil = (iso: string): number => {
-  const diff = parseISO(iso).getTime() - startOfToday().getTime();
-  return Math.round(diff / (1000 * 60 * 60 * 24));
+export const txTime = (iso: string): string => {
+  const d = new Date(iso);
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 };
 
-// Progress 0..1 of an investment's term, based on today's position between start and maturity.
-export const termProgress = (startISO: string, maturityISO: string): number => {
-  const start = parseISO(startISO).getTime();
-  const end = parseISO(maturityISO).getTime();
-  const now = startOfToday().getTime();
-  if (now <= start) return 0;
-  if (now >= end) return 1;
-  return (now - start) / (end - start);
-};
+export const truncate = (addr: string, lead = 6, tail = 4): string =>
+  `${addr.slice(0, lead)}...${addr.slice(-tail)}`;
 
-// Total value at maturity = principal + simple interest (monthlyRate% * durationMonths).
-export const maturityValue = (
-  amount: number,
-  interestRate: number,
-  durationMonths: number,
-): number => amount + amount * (interestRate / 100) * durationMonths;
-
-export const totalInterest = (
-  amount: number,
-  interestRate: number,
-  durationMonths: number,
-): number => amount * (interestRate / 100) * durationMonths;
-
-// Timestamp string used in the transaction ledger, e.g. "09/07/26 . 02:45 PM".
-export const nowLedgerStamp = (): string => {
-  const now = new Date();
-  const date = now.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
-  const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-  return `${date} . ${time}`;
-};
-
-// Ledger stamp for a fixed ISO date (used for scheduled payouts).
-export const ledgerStampForISO = (iso: string): string => {
-  const date = parseISO(iso).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-  });
-  return `${date} . 09:00 AM`;
-};
+// Interest accrued on a fixed term position up to a given day count.
+export const accrued = (principal: number, apy: number, days: number): number =>
+  principal * (apy / 100) * (days / 365);

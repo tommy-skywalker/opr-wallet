@@ -1,7 +1,7 @@
 // Minimal service worker: makes the app installable and provides an offline
 // fallback, using a NETWORK-FIRST strategy so online users always get fresh
 // content (no stale-cache surprises after a deploy).
-const CACHE = 'stanbic-cache-v1';
+const CACHE = 'opr-cache-v1';
 
 self.addEventListener('install', () => self.skipWaiting());
 

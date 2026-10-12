@@ -1,13 +1,13 @@
 {
-  "name": "Stanbic IBTC",
-  "short_name": "Stanbic",
-  "description": "Stanbic IBTC Mobile Banking",
+  "name": "OPR Wallet",
+  "short_name": "OPR",
+  "description": "OPR Wallet. Multi-chain self-custody wallet interface.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0033a0",
-  "theme_color": "#0033a0",
+  "background_color": "#0B0C0F",
+  "theme_color": "#0B0C0F",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },

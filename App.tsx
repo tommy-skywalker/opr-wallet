@@ -1,522 +1,99 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { AppScreen, UserProfile, Transaction, ActiveInvestment } from './types';
-import { maturityValue, nowLedgerStamp, ledgerStampForISO, startOfToday, parseISO } from './utils';
-import { isSyncEnabled, fetchState, saveState, RemoteState } from './services/db';
-import Dashboard from './components/Dashboard';
-import Profile from './components/Profile';
-import Transfer from './components/Transfer';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Screen, Asset } from './types';
+import { ASSETS, EARN, TRANSACTIONS } from './data';
+import Lock from './components/Lock';
+import Wallet from './components/Wallet';
+import Earn from './components/Earn';
 import Activity from './components/Activity';
-import Investment from './components/Investment';
+import Settings from './components/Settings';
+import Send from './components/Send';
+import Receive from './components/Receive';
 import BottomNav from './components/BottomNav';
-import Login from './components/Login';
 
-const FUND_NAME = 'Stanbic High-Yield Mutual Fund';
-
-// Seed state as of late July 2026:
-//  - 06 Jul and 10 Jul funds have MATURED and their values (interest included) were paid out.
-//  - A new ₦5,000,000 plan started 10 Jul and pays out 10 Sep.
-//  - Ledger reconciles to a ₦3,000,000 available balance.
-const INITIAL_USER: UserProfile = {
-  name: 'David Jaiye Sokeyo',
-  accountNumber: '0002874480',
-  accountType: 'Savings Account',
-  balance: 687345.0,
-  investmentBalance: 21000000.0, // 5,000,000 + 5,000,000 + 11,000,000 active fund values
-  activeInvestments: [
-    {
-      id: 'inv-jul-06',
-      name: FUND_NAME,
-      amount: 3650000,
-      interestRate: 5.42,
-      durationMonths: 2,
-      startDate: '2026-05-06',
-      maturityDate: '2026-07-06',
-      status: 'matured',
-      payoutDate: '2026-07-06',
-    },
-    {
-      id: 'inv-jul-10',
-      name: FUND_NAME,
-      amount: 3350000,
-      interestRate: 5.42,
-      durationMonths: 2,
-      startDate: '2026-05-10',
-      maturityDate: '2026-07-10',
-      status: 'matured',
-      payoutDate: '2026-07-10',
-    },
-    {
-      id: 'inv-sep-10',
-      name: FUND_NAME,
-      amount: 5000000,
-      interestRate: 5.42,
-      durationMonths: 2,
-      startDate: '2026-07-10',
-      maturityDate: '2026-09-10',
-      status: 'active',
-    },
-    {
-      id: 'inv-aug-03',
-      name: FUND_NAME,
-      amount: 5580000,
-      interestRate: 5.42,
-      durationMonths: 3,
-      startDate: '2026-05-03',
-      maturityDate: '2026-08-03',
-      status: 'matured',
-      payoutDate: '2026-08-03',
-    },
-    {
-      id: 'inv-oct-03',
-      name: FUND_NAME,
-      amount: 5000000,
-      interestRate: 5.42,
-      durationMonths: 2,
-      startDate: '2026-08-03',
-      maturityDate: '2026-10-03',
-      status: 'active',
-    },
-    {
-      id: 'inv-aug-07',
-      name: FUND_NAME,
-      amount: 8500000,
-      interestRate: 5.42,
-      durationMonths: 3,
-      startDate: '2026-05-07',
-      maturityDate: '2026-08-06',
-      status: 'matured',
-      payoutDate: '2026-08-06',
-    },
-    {
-      id: 'inv-oct-06',
-      name: FUND_NAME,
-      amount: 11000000,
-      interestRate: 5.42,
-      durationMonths: 2,
-      startDate: '2026-08-06',
-      maturityDate: '2026-10-06',
-      status: 'active',
-    },
-  ],
-};
-
-// Reconciles: 175,000 + 3,650,000 + 1,002,345 + 3,350,000 − 5,000,000 − 120,000
-//             + 5,580,000 − 5,000,000 − 200,000 − 100,000 − 150,000
-//             + 8,500,000 − 11,000,000 = 687,345
-const INITIAL_TRANSACTIONS: Transaction[] = [
-  {
-    id: 'tx-sub-oct-06',
-    name: 'Mutual Fund Subscription',
-    type: 'debit',
-    amount: 11000000,
-    date: '06/08/26 . 10:15 AM',
-    category: 'investment',
-  },
-  {
-    id: 'tx-payout-aug-06',
-    name: 'Investment Payout — High-Yield Fund',
-    type: 'credit',
-    amount: 8500000,
-    date: '06/08/26 . 09:00 AM',
-    category: 'payout',
-  },
-  {
-    id: 'tx-atm-aug-04',
-    name: 'ATM Withdrawal',
-    type: 'debit',
-    amount: 100000,
-    date: '04/08/26 . 11:20 AM',
-    category: 'system',
-  },
-  {
-    id: 'tx-atm-aug-03',
-    name: 'ATM Withdrawal',
-    type: 'debit',
-    amount: 150000,
-    date: '03/08/26 . 04:15 PM',
-    category: 'system',
-  },
-  {
-    id: 'tx-sub-oct-03',
-    name: 'Mutual Fund Subscription',
-    type: 'debit',
-    amount: 5000000,
-    date: '03/08/26 . 10:26 AM',
-    category: 'investment',
-  },
-  {
-    id: 'tx-payout-aug-03',
-    name: 'Investment Payout — High-Yield Fund',
-    type: 'credit',
-    amount: 5580000,
-    date: '03/08/26 . 09:00 AM',
-    category: 'payout',
-  },
-  {
-    id: 'tx-withdraw-aug-02',
-    name: 'Transfer to David Jaiye Sokeyo',
-    type: 'debit',
-    amount: 200000,
-    date: '02/08/26 . 03:41 PM',
-    category: 'transfer',
-  },
-  {
-    id: 'tx-withdraw-jul-27',
-    name: 'Transfer to David Jaiye Sokeyo',
-    type: 'debit',
-    amount: 120000,
-    date: '27/07/26 . 04:38 PM',
-    category: 'transfer',
-  },
-  {
-    id: 'tx-sub-sep-10',
-    name: 'Mutual Fund Subscription',
-    type: 'debit',
-    amount: 5000000,
-    date: '10/07/26 . 11:45 AM',
-    category: 'investment',
-  },
-  {
-    id: 'tx-payout-jul-10',
-    name: 'Investment Payout — High-Yield Fund',
-    type: 'credit',
-    amount: 3350000,
-    date: '10/07/26 . 09:00 AM',
-    category: 'payout',
-  },
-  {
-    id: 'tx-deposit-djs',
-    name: 'Transfer from David Jaiye Sokeyo',
-    type: 'credit',
-    amount: 1002345,
-    date: '09/07/26 . 10:00 AM',
-    category: 'transfer',
-  },
-  {
-    id: 'tx-payout-jul-06',
-    name: 'Investment Payout — High-Yield Fund',
-    type: 'credit',
-    amount: 3650000,
-    date: '06/07/26 . 09:00 AM',
-    category: 'payout',
-  },
-  {
-    id: 'tx-opening-credit',
-    name: 'Account Opening Credit',
-    type: 'credit',
-    amount: 175000,
-    date: '05/07/26 . 09:00 AM',
-    category: 'system',
-  },
-  {
-    id: 'tx-sub-jul-10',
-    name: 'Mutual Fund Subscription',
-    type: 'debit',
-    amount: 3350000,
-    date: '10/05/26 . 10:30 AM',
-    category: 'investment',
-  },
-  {
-    id: 'tx-sub-aug-07',
-    name: 'Mutual Fund Subscription',
-    type: 'debit',
-    amount: 8500000,
-    date: '07/05/26 . 01:15 PM',
-    category: 'investment',
-  },
-  {
-    id: 'tx-sub-jul-06',
-    name: 'Mutual Fund Subscription',
-    type: 'debit',
-    amount: 3650000,
-    date: '06/05/26 . 02:45 PM',
-    category: 'investment',
-  },
-  {
-    id: 'tx-sub-aug-03',
-    name: 'Mutual Fund Subscription',
-    type: 'debit',
-    amount: 5580000,
-    date: '03/05/26 . 09:15 AM',
-    category: 'investment',
-  },
-];
-
-// Bumped storage version so the new data model loads cleanly.
-const STORAGE = {
-  auth: 'stanbic_v22_auth',
-  user: 'stanbic_v22_user',
-  tx: 'stanbic_v22_tx',
-  lastActive: 'stanbic_v22_last_active',
-};
-
-// Sign the user out after 15 minutes of inactivity.
-const SESSION_TIMEOUT_MS = 15 * 60 * 1000;
-
-const loadJSON = <T,>(key: string, fallback: T): T => {
-  const saved = localStorage.getItem(key);
-  if (!saved) return fallback;
-  try {
-    const parsed = JSON.parse(saved);
-    return parsed ?? fallback;
-  } catch {
-    return fallback;
-  }
-};
+const AUTH_KEY = 'opr_unlocked_at';
+const LOCK_AFTER_MS = 15 * 60 * 1000;
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    const authed = localStorage.getItem(STORAGE.auth) === 'true';
-    // Expire the session if the app was last used more than 15 minutes ago.
-    const last = Number(localStorage.getItem(STORAGE.lastActive) || 0);
-    if (authed && last && Date.now() - last > SESSION_TIMEOUT_MS) return false;
-    return authed;
+  const [unlocked, setUnlocked] = useState<boolean>(() => {
+    const at = Number(localStorage.getItem(AUTH_KEY) || 0);
+    return at > 0 && Date.now() - at < LOCK_AFTER_MS;
   });
-  const [currentScreen, setCurrentScreen] = useState<AppScreen>(AppScreen.DASHBOARD);
-  const [user, setUser] = useState<UserProfile>(() => loadJSON(STORAGE.user, INITIAL_USER));
-  const [transactions, setTransactions] = useState<Transaction[]>(() =>
-    loadJSON(STORAGE.tx, INITIAL_TRANSACTIONS),
+  const [screen, setScreen] = useState<Screen>('wallet');
+  const [modal, setModal] = useState<null | 'send' | 'receive'>(null);
+
+  const spotTotal = useMemo(
+    () => ASSETS.reduce((sum, a) => sum + a.amount * a.price, 0),
+    [],
   );
 
-  // Cross-device sync bookkeeping (refs so they don't trigger re-renders).
-  const syncReadyRef = useRef(false); // true once the initial remote load resolves
-  const pendingRef = useRef(false); // true while a local change is waiting to be saved
-  const lastSyncedRef = useRef(''); // JSON of the state last saved-to / applied-from remote
-
-  useEffect(() => localStorage.setItem(STORAGE.user, JSON.stringify(user)), [user]);
-  useEffect(() => localStorage.setItem(STORAGE.tx, JSON.stringify(transactions)), [transactions]);
-  useEffect(() => localStorage.setItem(STORAGE.auth, String(isAuthenticated)), [isAuthenticated]);
-
-  // Inactivity timeout: any interaction refreshes the session; 15 idle minutes signs out.
+  // Refresh the unlock stamp on interaction, and re-lock after inactivity.
   useEffect(() => {
-    if (!isAuthenticated) return;
-    const touch = () => localStorage.setItem(STORAGE.lastActive, String(Date.now()));
+    if (!unlocked) return;
+    const touch = () => localStorage.setItem(AUTH_KEY, String(Date.now()));
     touch();
     const events: (keyof WindowEventMap)[] = ['click', 'keydown', 'touchstart', 'scroll'];
     events.forEach((e) => window.addEventListener(e, touch, { passive: true }));
-    const check = setInterval(() => {
-      const last = Number(localStorage.getItem(STORAGE.lastActive) || 0);
-      if (Date.now() - last > SESSION_TIMEOUT_MS) {
-        setIsAuthenticated(false);
-        setCurrentScreen(AppScreen.DASHBOARD);
-      }
+    const timer = setInterval(() => {
+      const at = Number(localStorage.getItem(AUTH_KEY) || 0);
+      if (Date.now() - at > LOCK_AFTER_MS) setUnlocked(false);
     }, 30000);
     return () => {
       events.forEach((e) => window.removeEventListener(e, touch));
-      clearInterval(check);
+      clearInterval(timer);
     };
-  }, [isAuthenticated]);
+  }, [unlocked]);
 
-  // Load shared state from Supabase on open, then poll for remote changes.
-  useEffect(() => {
-    if (!isSyncEnabled()) {
-      syncReadyRef.current = true; // local-only mode
-      return;
-    }
-    let cancelled = false;
-
-    const apply = (remote: RemoteState) => {
-      if (pendingRef.current) return; // don't overwrite an unsaved local change
-      const json = JSON.stringify(remote.data);
-      if (json === lastSyncedRef.current) return; // nothing new
-      lastSyncedRef.current = json;
-      setUser(remote.data.user);
-      setTransactions(remote.data.transactions);
-    };
-
-    (async () => {
-      try {
-        const remote = await fetchState();
-        if (cancelled) return;
-        if (remote) {
-          apply(remote);
-        } else {
-          const seed = { user, transactions };
-          lastSyncedRef.current = JSON.stringify(seed);
-          await saveState(seed);
-        }
-      } catch (e) {
-        console.warn('Sync init failed, running local-only:', e);
-      } finally {
-        syncReadyRef.current = true;
-      }
-    })();
-
-    const interval = setInterval(async () => {
-      try {
-        const remote = await fetchState();
-        if (!cancelled && remote) apply(remote);
-      } catch {
-        /* ignore transient poll errors */
-      }
-    }, 3000);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Push local changes to the shared record (debounced, last-write-wins).
-  useEffect(() => {
-    if (!isSyncEnabled() || !syncReadyRef.current) return;
-    const state = { user, transactions };
-    const json = JSON.stringify(state);
-    if (json === lastSyncedRef.current) return;
-    pendingRef.current = true;
-    const t = setTimeout(async () => {
-      try {
-        await saveState(state);
-        lastSyncedRef.current = json;
-      } catch (e) {
-        console.warn('Sync save failed:', e);
-      } finally {
-        pendingRef.current = false;
-      }
-    }, 400);
-    return () => clearTimeout(t);
-  }, [user, transactions]);
-
-  // Maturity engine: any active fund whose maturity date has arrived is paid out
-  // (its full value credited to the available balance) exactly once.
-  useEffect(() => {
-    const today = startOfToday();
-    const due = user.activeInvestments.filter(
-      (inv) => inv.status === 'active' && parseISO(inv.maturityDate) <= today,
-    );
-    if (due.length === 0) return;
-
-    const credited = due.reduce((sum, inv) => sum + inv.amount, 0);
-
-    setUser((prev) => ({
-      ...prev,
-      balance: prev.balance + credited,
-      investmentBalance: prev.investmentBalance - credited,
-      activeInvestments: prev.activeInvestments.map((inv) =>
-        due.find((d) => d.id === inv.id)
-          ? { ...inv, status: 'matured', payoutDate: inv.maturityDate }
-          : inv,
-      ),
-    }));
-
-    setTransactions((prev) => [
-      ...due.map((inv) => ({
-        id: `tx-payout-${inv.id}`,
-        name: 'Investment Payout — High-Yield Fund',
-        type: 'credit' as const,
-        amount: inv.amount,
-        date: ledgerStampForISO(inv.maturityDate),
-        category: 'payout' as const,
-      })),
-      ...prev,
-    ]);
-  }, [user.activeInvestments]);
-
-  const handleInvestmentComplete = (capital: number, months: number, rate: number) => {
-    const now = new Date();
-    const maturity = new Date(now.getFullYear(), now.getMonth() + months, now.getDate());
-    const toISO = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
-    // Stored value is the full maturity payout (principal + interest).
-    const payout = maturityValue(capital, rate, months);
-
-    const newInvestment: ActiveInvestment = {
-      id: `inv-${now.getTime()}`,
-      name: FUND_NAME,
-      amount: payout,
-      interestRate: rate,
-      durationMonths: months,
-      startDate: toISO(now),
-      maturityDate: toISO(maturity),
-      status: 'active',
-    };
-
-    setUser((prev) => ({
-      ...prev,
-      balance: prev.balance - capital,
-      investmentBalance: prev.investmentBalance + payout,
-      activeInvestments: [newInvestment, ...prev.activeInvestments],
-    }));
-
-    setTransactions((prev) => [
-      {
-        id: `tx-sub-${now.getTime()}`,
-        name: 'Mutual Fund Subscription',
-        type: 'debit',
-        amount: capital,
-        date: nowLedgerStamp(),
-        category: 'investment',
-      },
-      ...prev,
-    ]);
+  const lock = () => {
+    localStorage.removeItem(AUTH_KEY);
+    setUnlocked(false);
+    setScreen('wallet');
   };
 
-  const handleTransferComplete = (amount: number, recipient: string) => {
-    setTransactions((prev) => [
-      {
-        id: `tx-out-${Date.now()}`,
-        name: recipient || 'Funds Transfer',
-        type: 'debit',
-        amount,
-        date: nowLedgerStamp(),
-        category: 'transfer',
-      },
-      ...prev,
-    ]);
-    setUser((prev) => ({ ...prev, balance: prev.balance - amount }));
-    setCurrentScreen(AppScreen.DASHBOARD);
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setCurrentScreen(AppScreen.DASHBOARD);
-  };
-
-  if (!isAuthenticated) {
-    return <Login onLogin={() => setIsAuthenticated(true)} />;
+  if (!unlocked) {
+    return <Lock onUnlock={() => setUnlocked(true)} />;
   }
 
-  const renderScreen = () => {
-    switch (currentScreen) {
-      case AppScreen.PROFILE:
-        return <Profile user={user} onLogout={handleLogout} />;
-      case AppScreen.TRANSFER:
-        return (
-          <Transfer
-            user={user}
-            transactions={transactions}
-            onBack={() => setCurrentScreen(AppScreen.DASHBOARD)}
-            onTransferComplete={handleTransferComplete}
-          />
-        );
-      case AppScreen.ACTIVITY:
-        return <Activity transactions={transactions} user={user} />;
-      case AppScreen.INVESTMENT:
-        return <Investment user={user} onInvestmentComplete={handleInvestmentComplete} />;
-      case AppScreen.DASHBOARD:
+  const openAsset = (_a: Asset) => setModal('receive');
+
+  const body = () => {
+    switch (screen) {
+      case 'earn':
+        return <Earn earn={EARN} onWithdraw={() => setModal('send')} />;
+      case 'activity':
+        return <Activity transactions={TRANSACTIONS} />;
+      case 'settings':
+        return <Settings onLock={lock} />;
+      case 'wallet':
       default:
         return (
-          <Dashboard
-            user={user}
-            transactions={transactions}
-            onTransfer={() => setCurrentScreen(AppScreen.TRANSFER)}
-            onViewActivity={() => setCurrentScreen(AppScreen.ACTIVITY)}
-            onViewPortfolio={() => setCurrentScreen(AppScreen.INVESTMENT)}
+          <Wallet
+            assets={ASSETS}
+            earn={EARN}
+            spotTotal={spotTotal}
+            onSend={() => setModal('send')}
+            onReceive={() => setModal('receive')}
+            onEarn={() => setScreen('earn')}
+            onAsset={openAsset}
           />
         );
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-200 font-sans flex flex-col">
-      <div className="flex-1 w-full max-w-md mx-auto bg-[#f4f5f7] min-h-screen flex flex-col relative text-gray-900 sm:border-x sm:border-gray-300">
-        <div className="flex-1 overflow-y-auto custom-scrollbar pb-20">{renderScreen()}</div>
-        <div className="sticky bottom-0 w-full z-20">
-          <BottomNav currentScreen={currentScreen} onNavigate={setCurrentScreen} />
+    <div className="h-[100dvh] bg-black flex flex-col overflow-hidden">
+      <div className="flex-1 w-full max-w-md mx-auto bg-[#0B0C0F] flex flex-col relative overflow-hidden">
+        <main key={screen} className="flex-1 min-h-0 overflow-y-auto no-scrollbar animate-fade-up">
+          {body()}
+        </main>
+        <div className="shrink-0 z-20">
+          <BottomNav current={screen} onNavigate={setScreen} />
         </div>
       </div>
+
+      {modal === 'send' && (
+        <Send assets={ASSETS} spotTotal={spotTotal} onClose={() => setModal(null)} />
+      )}
+      {modal === 'receive' && <Receive assets={ASSETS} onClose={() => setModal(null)} />}
     </div>
   );
 };
