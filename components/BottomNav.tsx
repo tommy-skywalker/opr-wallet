@@ -6,19 +6,31 @@ const ITEMS: { screen: Screen; label: string; icon: React.ReactNode }[] = [
     screen: 'wallet',
     label: 'Wallet',
     icon: (
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 10a2 2 0 012-2h14a2 2 0 012 2M3 10v8a2 2 0 002 2h14a2 2 0 002-2v-8m-4 4h.01" />
+      <>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 8.5A2.5 2.5 0 015.5 6h11A2.5 2.5 0 0119 8.5v7a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 013 15.5v-7z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 10.5h1.5A1.5 1.5 0 0122 12v.5a1.5 1.5 0 01-1.5 1.5H19" />
+        <path strokeLinecap="round" d="M6.5 6V5.2A1.2 1.2 0 017.9 4l8.3 1.4" />
+      </>
     ),
   },
   {
     screen: 'earn',
     label: 'Earn',
-    icon: <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />,
+    icon: (
+      <>
+        <path strokeLinecap="round" d="M4 20V13M9 20v-4.5M14 20v-8" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 8.5L17 5l3 3.5" />
+        <path strokeLinecap="round" d="M19 20V5.5" />
+      </>
+    ),
   },
   {
     screen: 'activity',
     label: 'Activity',
     icon: (
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h4l3 8 4-16 3 8h4" />
+      <>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h3.2l2.1-5.2 3.4 11 2.4-7.1 1.5 1.3H21" />
+      </>
     ),
   },
   {
@@ -26,8 +38,9 @@ const ITEMS: { screen: Screen; label: string; icon: React.ReactNode }[] = [
     label: 'Settings',
     icon: (
       <>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" d="M4 7h10M18.5 7H20M4 17h3M11 17h9" />
+        <circle cx="16.2" cy="7" r="2.2" />
+        <circle cx="8.8" cy="17" r="2.2" />
       </>
     ),
   },
@@ -47,17 +60,17 @@ const BottomNav: React.FC<{ current: Screen; onNavigate: (s: Screen) => void }> 
           className="py-2.5 flex flex-col items-center gap-1 active:scale-95 transition-transform"
         >
           <svg
-            className={`w-[22px] h-[22px] transition-colors ${active ? 'text-white' : 'text-white/35'}`}
+            className={`w-[22px] h-[22px] transition-colors ${active ? 'text-white' : 'text-white/32'}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
-            strokeWidth={active ? 2 : 1.7}
+            strokeWidth={active ? 1.9 : 1.6}
           >
             {item.icon}
           </svg>
           <span
             className={`text-[10px] font-medium transition-colors ${
-              active ? 'text-white' : 'text-white/35'
+              active ? 'text-white' : 'text-white/32'
             }`}
           >
             {item.label}

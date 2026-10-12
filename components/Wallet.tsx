@@ -105,10 +105,47 @@ const Wallet: React.FC<Props> = ({ assets, earn, spotTotal, onSend, onReceive, o
 
       {/* Actions */}
       <section className="px-5 mt-6 grid grid-cols-4 gap-2.5">
-        <Action label="Send" onClick={onSend} icon={<path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6" />} />
-        <Action label="Receive" onClick={onReceive} icon={<path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m0 0l6-6m-6 6l-6-6" />} />
-        <Action label="Swap" onClick={onSend} icon={<path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />} />
-        <Action label="Earn" onClick={onEarn} icon={<path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />} />
+        <Action
+          label="Send"
+          onClick={onSend}
+          icon={
+            <>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 17.5V7m0 0l-4.2 4.2M12 7l4.2 4.2" />
+              <path strokeLinecap="round" d="M5.5 19.5h13" />
+            </>
+          }
+        />
+        <Action
+          label="Receive"
+          onClick={onReceive}
+          icon={
+            <>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.5V17m0 0l4.2-4.2M12 17l-4.2-4.2" />
+              <path strokeLinecap="round" d="M5.5 20h13" />
+            </>
+          }
+        />
+        <Action
+          label="Swap"
+          onClick={onSend}
+          icon={
+            <>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 17.5V5.8m0 0L4.3 9M7.5 5.8L10.7 9" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6.5v11.7m0 0L19.7 15M16.5 18.2L13.3 15" />
+            </>
+          }
+        />
+        <Action
+          label="Earn"
+          onClick={onEarn}
+          icon={
+            <>
+              <path strokeLinecap="round" d="M4 19.5V14M9.3 19.5v-8M14.6 19.5v-4" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.6 8.2L17.2 4.5l3.3 3.7" />
+              <path strokeLinecap="round" d="M19.9 19.5V5" />
+            </>
+          }
+        />
       </section>
 
       {/* Split: available vs locked */}

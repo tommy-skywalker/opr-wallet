@@ -20,11 +20,33 @@ export const Logo: React.FC<{ size?: number }> = ({ size = 28 }) => (
   </svg>
 );
 
-const GLYPHS: Record<string, string> = {
-  BTC: '₿',
-  ETH: 'Ξ',
-  USDT: '₮',
-  USDC: '$',
+// Token marks. Ethereum gets its diamond, the rest use their currency glyph,
+// all reversed out of a solid brand colour so the asset list scans at a glance.
+const MARKS: Record<string, React.ReactNode> = {
+  ETH: (
+    <g fill="#fff">
+      <path d="M12 3 7 12l5 2.95V3z" opacity="0.55" />
+      <path d="M12 3v11.95L17 12 12 3z" />
+      <path d="M12 16.1 7 13.15 12 21v-4.9z" opacity="0.55" />
+      <path d="M12 21v-4.9l5-2.95L12 21z" />
+    </g>
+  ),
+  BTC: (
+    <text x="12" y="17.6" textAnchor="middle" fontSize="16" fontWeight="700" fill="#fff">
+      ₿
+    </text>
+  ),
+  USDT: (
+    <text x="12" y="17.4" textAnchor="middle" fontSize="16" fontWeight="700" fill="#fff">
+      ₮
+    </text>
+  ),
+  USDC: (
+    <g fill="none" stroke="#fff" strokeWidth="1.7" strokeLinecap="round">
+      <circle cx="12" cy="12" r="7.4" opacity="0.5" />
+      <path d="M13.9 9.8c-.4-.8-1.1-1.2-2-1.2-1.2 0-2 .7-2 1.7 0 2.3 4.4 1 4.4 3.4 0 1-.9 1.8-2.2 1.8-1 0-1.8-.4-2.2-1.2M12 7.2v1.4M12 15.4v1.4" />
+    </g>
+  ),
 };
 
 export const CoinIcon: React.FC<{ symbol: string; color: string; size?: number }> = ({
@@ -33,21 +55,35 @@ export const CoinIcon: React.FC<{ symbol: string; color: string; size?: number }
   size = 40,
 }) => (
   <div
-    className="rounded-full flex items-center justify-center shrink-0 font-semibold"
+    className="rounded-full flex items-center justify-center shrink-0 relative overflow-hidden"
     style={{
       width: size,
       height: size,
-      background: `${color}1f`,
-      color,
-      fontSize: size * 0.46,
-      border: `1px solid ${color}33`,
+      background: color,
+      boxShadow: `0 2px 10px -2px ${color}80`,
     }}
   >
-    {GLYPHS[symbol] || symbol.slice(0, 1)}
+    {/* soft top highlight for a little depth */}
+    <div
+      className="absolute inset-0 rounded-full"
+      style={{ background: 'linear-gradient(160deg, rgba(255,255,255,0.28), rgba(255,255,255,0) 55%)' }}
+    />
+    <svg
+      viewBox="0 0 24 24"
+      width={size * 0.66}
+      height={size * 0.66}
+      className="relative"
+      fontFamily="Inter, system-ui, sans-serif"
+    >
+      {MARKS[symbol] || (
+        <text x="12" y="17" textAnchor="middle" fontSize="11" fontWeight="700" fill="#fff">
+          {symbol.slice(0, 3)}
+        </text>
+      )}
+    </svg>
   </div>
 );
 
-/** Bottom sheet with a backdrop. Mounts with a slide-up. */
 export const Sheet: React.FC<{
   open: boolean;
   onClose: () => void;

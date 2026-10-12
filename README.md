@@ -10,9 +10,9 @@ Every graph, ring and icon in the app is hand-built SVG.
 > Demo project. No keys are generated, no funds are held, and outgoing transfers are
 > intentionally disabled.
 
-| Wallet | Earn | Activity | Receive |
-|---|---|---|---|
-| ![Wallet](screenshots/wallet.jpg) | ![Earn](screenshots/earn.jpg) | ![Activity](screenshots/activity.jpg) | ![Receive](screenshots/receive.jpg) |
+| Lock | Wallet | Assets | Earn | Activity | Receive |
+|---|---|---|---|---|---|
+| ![Lock](screenshots/lock.jpg) | ![Wallet](screenshots/wallet.jpg) | ![Assets](screenshots/assets.jpg) | ![Earn](screenshots/earn.jpg) | ![Activity](screenshots/activity.jpg) | ![Receive](screenshots/receive.jpg) |
 
 ## Design direction
 
@@ -51,7 +51,7 @@ principal, rate, start and maturity dates. Everything on screen is computed from
 days elapsed, percentage of term served, interest accrued to date, and the maturity
 payout. The figures move on their own as time passes.
 
-**Interface details.** A passcode lock with a shake on failure, a balance count-up that
+**Interface details.** A six digit passcode lock with a shake on failure and a Face ID shortcut, a balance count-up that
 still lands correctly if the tab is backgrounded and `requestAnimationFrame` is
 throttled, bottom sheets with spring easing, and a 15 minute inactivity auto-lock.
 
@@ -61,7 +61,7 @@ throttled, bottom sheets with spring easing, and a 15 minute inactivity auto-loc
 - **25,000 USDC** locked in a fixed term position at **4.5% monthly**, opened
   17 July 2026 and maturing 12 December 2026, paying out **$30,550.00**
 
-Passcode: `1304`
+Passcode: `110801`, or tap the Face ID key to unlock.
 
 ## Run it
 
